@@ -1,0 +1,43 @@
+name: UI Automation with Playwright
+on:
+  - push
+
+jobs:
+  ui_automation:
+    name: UI Automation with Playwright
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+      - name: Install dependencies
+        run: |
+          npm ci
+          npx playwright install chromium --with-deps
+      - name: Run tests
+        id: run-tests
+        continue-on-error: true
+        run: |
+          EXITCODE=0
+          npm test || EXITCODE=$?
+          echo "exitcode=$EXITCODE" >> $GITHUB_OUTPUT
+          exit $EXITCODE
+        env:
+          FAKER_SEED: '12345'
+      - name: Upload Test Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: UI Automation Report
+          path: playwright-report/
+      - name: Fail if tests failed
+        if: steps.run-tests.outputs.exitcode != '0'
+        run: exit 1
