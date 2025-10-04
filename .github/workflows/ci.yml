@@ -33,11 +33,15 @@ jobs:
           exit $EXITCODE
         env:
           FAKER_SEED: '12345'
+      - name: Prepare report directory
+        run: |
+          mkdir report
+          mv playwright-report report/playwright-report
       - name: Upload Test Report
         uses: actions/upload-artifact@v4
         with:
           name: UI Automation Report
-          path: playwright-report/
+          path: report/
       - name: Fail if tests failed
         if: steps.run-tests.outputs.exitcode != '0'
         run: exit 1
